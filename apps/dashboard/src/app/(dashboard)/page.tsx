@@ -2,7 +2,7 @@ import { Building2, Phone, Users, UserCog, Activity } from 'lucide-react';
 import { StatsCard } from '@/components/stats-card';
 import { pb } from '@/lib/pocketbase';
 import { COLLECTIONS } from '@/lib/types';
-import type { EventLog, User, Lead, ColdCall } from '@/lib/types';
+import type { EventLog } from '@/lib/types';
 import { timeAgo } from '@/lib/utils';
 
 async function getStats() {
@@ -67,18 +67,18 @@ function getEventDescription(event: EventLog): string {
   }
 }
 
-function getEventIcon(eventType: string): string {
+function getEventBadge(eventType: string): { bg: string; text: string } {
   switch (eventType) {
     case 'Outreach':
-      return 'bg-blue-500';
+      return { bg: 'bg-[var(--info-subtle)]', text: 'text-[var(--info)]' };
     case 'Cold Call':
-      return 'bg-green-500';
+      return { bg: 'bg-[var(--success-subtle)]', text: 'text-[var(--success)]' };
     case 'User':
-      return 'bg-purple-500';
+      return { bg: 'bg-[var(--primary-subtle)]', text: 'text-[var(--primary)]' };
     case 'System':
-      return 'bg-gray-500';
+      return { bg: 'bg-[var(--card-hover)]', text: 'text-[var(--muted)]' };
     default:
-      return 'bg-[var(--primary)]';
+      return { bg: 'bg-[var(--card-hover)]', text: 'text-[var(--foreground)]' };
   }
 }
 
@@ -92,72 +92,81 @@ export default async function OverviewPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold">Overview</h1>
-        <p className="text-[var(--muted)] mt-1">Welcome to your CRM dashboard</p>
+        <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
+        <p className="text-sm text-[var(--muted)] mt-1">Welcome to your CRM dashboard</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          title="Total Companies"
+          title="Companies"
           value={stats.totalCompanies}
           icon={Building2}
           description="Businesses in database"
+          variant="default"
         />
         <StatsCard
-          title="Total Cold Calls"
+          title="Cold Calls"
           value={stats.totalColdCalls}
           icon={Phone}
           description="Calls recorded"
+          variant="accent"
         />
         <StatsCard
-          title="Total Leads"
+          title="Leads"
           value={stats.totalLeads}
           icon={Users}
           description="Prospects tracked"
+          variant="primary"
         />
         <StatsCard
-          title="Active Team Members"
+          title="Team Members"
           value={stats.activeMembers}
           icon={UserCog}
-          description="Online users"
+          description="Active users"
+          variant="default"
         />
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl">
-        <div className="px-6 py-4 border-b border-[var(--card-border)] flex items-center gap-2">
-          <Activity size={20} className="text-[var(--primary)]" />
-          <h2 className="font-semibold">Recent Activity</h2>
+      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--card-border)] flex items-center gap-2">
+          <Activity size={18} strokeWidth={1.5} className="text-[var(--muted)]" />
+          <h2 className="font-semibold text-sm">Recent Activity</h2>
         </div>
-        <div className="divide-y divide-[var(--card-border)]">
+        <div>
           {recentActivity.length === 0 ? (
-            <div className="px-6 py-12 text-center text-[var(--muted)]">
-              <Activity size={48} className="mx-auto mb-4 opacity-50" />
-              <p>No recent activity</p>
-              <p className="text-sm mt-1">Activity will appear here as events are logged</p>
+            <div className="px-5 py-16 text-center">
+              <div className="w-12 h-12 rounded-full bg-[var(--card-hover)] flex items-center justify-center mx-auto mb-4">
+                <Activity size={24} className="text-[var(--muted)]" />
+              </div>
+              <p className="text-sm font-medium">No recent activity</p>
+              <p className="text-xs text-[var(--muted)] mt-1">Activity will appear here as events are logged</p>
             </div>
           ) : (
-            recentActivity.map((event) => (
-              <div key={event.id} className="px-6 py-4 flex items-start gap-4">
-                <div className={`w-2 h-2 mt-2 rounded-full ${getEventIcon(event.event_type)}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm">{getEventDescription(event)}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-[var(--muted)]">{event.event_type}</span>
-                    {event.source && (
-                      <>
-                        <span className="text-xs text-[var(--muted)]">•</span>
-                        <span className="text-xs text-[var(--muted)]">{event.source}</span>
-                      </>
-                    )}
+            <div className="divide-y divide-[var(--card-border)]">
+              {recentActivity.map((event) => {
+                const badge = getEventBadge(event.event_type);
+                return (
+                  <div key={event.id} className="px-5 py-3.5 flex items-start gap-4 hover:bg-[var(--card-hover)] transition-colors">
+                    <div className="mt-0.5">
+                      <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider ${badge.bg} ${badge.text}`}>
+                        {event.event_type}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">{getEventDescription(event)}</p>
+                      {event.source && (
+                        <span className="text-xs text-[var(--muted)]">via {event.source}</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-[var(--muted)] shrink-0">
+                      {timeAgo(event.created)}
+                    </span>
                   </div>
-                </div>
-                <span className="text-xs text-[var(--muted)] shrink-0">
-                  {timeAgo(event.created)}
-                </span>
-              </div>
-            ))
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

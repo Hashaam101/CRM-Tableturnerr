@@ -14,6 +14,7 @@ import {
   Instagram,
   Menu,
   X,
+  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -26,8 +27,11 @@ const navItems = [
   { href: '/actors', label: 'Actors', icon: Instagram },
   { href: '/notes', label: 'Notes', icon: StickyNote },
   { href: '/team', label: 'Team', icon: UserCog },
-  { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/goals', label: 'Goals', icon: Target, comingSoon: true },
+];
+
+const bottomNavItems = [
+  { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar() {
@@ -39,16 +43,16 @@ export function Sidebar() {
       {/* Mobile menu button */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-[var(--sidebar-bg)] border border-[var(--sidebar-border)] lg:hidden"
+        className="fixed top-4 left-4 z-50 p-2.5 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] lg:hidden hover:bg-[var(--card-hover)] transition-colors"
         aria-label="Toggle menu"
       >
-        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+        {mobileOpen ? <X size={18} /> : <Menu size={18} />}
       </button>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -56,71 +60,105 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-40 h-screen w-64 bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border)] transition-transform duration-200',
+          'fixed top-0 left-0 z-40 h-screen w-64 bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border)] transition-transform duration-200 flex flex-col',
           'lg:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center gap-2 px-6 py-5 border-b border-[var(--sidebar-border)]">
-            <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center">
-              <span className="text-white font-bold text-sm">TT</span>
-            </div>
-            <span className="font-semibold text-lg">Tableturnerr</span>
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-[var(--sidebar-border)]">
+          <div className="w-9 h-9 rounded-lg bg-[var(--foreground)] flex items-center justify-center">
+            <Zap size={18} className="text-[var(--background)]" />
           </div>
+          <div>
+            <span className="font-semibold text-base tracking-tight">Tableturnerr</span>
+            <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider">CRM Platform</p>
+          </div>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 px-3 py-4 overflow-y-auto">
-            <ul className="space-y-1">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href;
-                const Icon = item.icon;
+        {/* Main Navigation */}
+        <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          <div className="mb-2 px-3">
+            <span className="text-[10px] font-medium text-[var(--muted)] uppercase tracking-wider">
+              Main Menu
+            </span>
+          </div>
+          <ul className="space-y-0.5">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
 
-                return (
-                  <li key={item.href}>
-                    {item.comingSoon ? (
-                      <div
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[var(--muted)] cursor-not-allowed opacity-60"
-                        title="Coming Soon"
-                      >
-                        <Icon size={20} />
-                        <span>{item.label}</span>
-                        <span className="ml-auto text-xs bg-[var(--sidebar-border)] px-2 py-0.5 rounded">
-                          Soon
-                        </span>
-                      </div>
-                    ) : (
-                      <Link
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-                          isActive
-                            ? 'bg-[var(--primary)] text-white'
-                            : 'text-[var(--muted)] hover:bg-[var(--sidebar-border)] hover:text-[var(--foreground)]'
-                        )}
-                      >
-                        <Icon size={20} />
-                        <span>{item.label}</span>
-                      </Link>
+              return (
+                <li key={item.href}>
+                  {item.comingSoon ? (
+                    <div
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[var(--muted-foreground)] cursor-not-allowed"
+                      title="Coming Soon"
+                    >
+                      <Icon size={18} strokeWidth={1.5} />
+                      <span className="text-sm">{item.label}</span>
+                      <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-[var(--card-hover)] text-[var(--muted)]">
+                        Soon
+                      </span>
+                    </div>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150',
+                        isActive
+                          ? 'bg-[var(--foreground)] text-[var(--background)]'
+                          : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--foreground)]'
+                      )}
+                    >
+                      <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Bottom Navigation */}
+        <div className="px-3 py-3 border-t border-[var(--sidebar-border)]">
+          <ul className="space-y-0.5">
+            {bottomNavItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150',
+                      isActive
+                        ? 'bg-[var(--foreground)] text-[var(--background)]'
+                        : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--foreground)]'
                     )}
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+                  >
+                    <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
-          {/* Footer */}
-          <div className="px-6 py-4 border-t border-[var(--sidebar-border)]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center">
-                <span className="text-white text-sm font-medium">U</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">User</p>
-                <p className="text-xs text-[var(--muted)] truncate">Operator</p>
-              </div>
+        {/* User Profile */}
+        <div className="px-4 py-4 border-t border-[var(--sidebar-border)]">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--sidebar-hover)] transition-colors cursor-pointer">
+            <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center">
+              <span className="text-white text-xs font-semibold">U</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">User</p>
+              <p className="text-xs text-[var(--muted)] truncate">Operator</p>
             </div>
           </div>
         </div>

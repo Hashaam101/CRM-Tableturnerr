@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { pb } from '@/lib/pocketbase';
 import { InstaActor, COLLECTIONS, User } from '@/lib/types';
-import { format, subDays } from 'date-fns';
-import { Instagram, Activity, User as UserIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { Instagram, Activity, User as UserIcon, RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ActorStats {
   dmsSent: number;
@@ -14,6 +15,12 @@ interface ActorWithStats extends InstaActor {
   stats: ActorStats;
   ownerName?: string;
 }
+
+const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  'Active': { bg: 'bg-[var(--success-subtle)]', text: 'text-[var(--success)]' },
+  'Suspended': { bg: 'bg-[var(--error-subtle)]', text: 'text-[var(--error)]' },
+  'Paused': { bg: 'bg-[var(--warning-subtle)]', text: 'text-[var(--warning)]' },
+};
 
 export default function ActorsPage() {
   const [actors, setActors] = useState<ActorWithStats[]>([]);
@@ -26,20 +33,19 @@ export default function ActorsPage() {
   async function fetchActors() {
     setLoading(true);
     try {
-      const result = await pb.collection(COLLECTIONS.INSTA_ACTORS).getList<InstaActor>(1, 100, { 
+      const result = await pb.collection(COLLECTIONS.INSTA_ACTORS).getList<InstaActor>(1, 100, {
         sort: '-last_activity',
-        expand: 'owner' 
+        expand: 'owner'
       });
 
       const actorsData = await Promise.all(result.items.map(async (actor) => {
-        // Count DMs (Total)
         let dmsSent = 0;
         try {
-            const dmsResult = await pb.collection(COLLECTIONS.EVENT_LOGS).getList(1, 1, {
-                filter: `actor = "${actor.id}" && event_type = "Outreach"`,
-                fields: 'id'
-            });
-            dmsSent = dmsResult.totalItems;
+          const dmsResult = await pb.collection(COLLECTIONS.EVENT_LOGS).getList(1, 1, {
+            filter: `actor = "${actor.id}" && event_type = "Outreach"`,
+            fields: 'id'
+          });
+          dmsSent = dmsResult.totalItems;
         } catch (e) { console.error(e); }
 
         const owner = actor.expand?.owner as User | undefined;
@@ -59,62 +65,103 @@ export default function ActorsPage() {
     }
   }
 
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Instagram Actors</h1>
+  const getStatusStyle = (status: string) => {
+    if (status.includes('Suspended')) return STATUS_STYLES['Suspended'];
+    return STATUS_STYLES[status] || { bg: 'bg-[var(--card-hover)]', text: 'text-[var(--muted)]' };
+  };
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {loading ? (
-              <tr><td colSpan={5} className="px-6 py-4 text-center">Loading...</td></tr>
-            ) : actors.map((actor) => (
-              <tr key={actor.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
-                      <Instagram size={20} />
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">@{actor.username}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                    ${actor.status === 'Active' ? 'bg-green-100 text-green-800' : 
-                      actor.status.includes('Suspended') ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
-                    {actor.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <UserIcon size={14} />
-                    {actor.ownerName}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                     <Activity size={14} />
-                     {actor.stats.dmsSent} DMs sent
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {actor.last_activity ? format(new Date(actor.last_activity), 'MMM d, HH:mm') : '-'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Instagram Actors</h1>
+          <p className="text-sm text-[var(--muted)] mt-1">Manage your Instagram outreach accounts</p>
+        </div>
+
+        <button
+          onClick={fetchActors}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--card-border)] hover:bg-[var(--card-hover)] transition-colors"
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          Refresh
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl overflow-hidden">
+        {loading ? (
+          <div className="p-16 text-center">
+            <RefreshCw size={32} className="mx-auto mb-4 text-[var(--muted)] animate-spin" />
+            <p className="text-sm text-[var(--muted)]">Loading actors...</p>
+          </div>
+        ) : actors.length === 0 ? (
+          <div className="p-16 text-center">
+            <div className="w-12 h-12 rounded-full bg-[var(--accent-red-subtle)] flex items-center justify-center mx-auto mb-4">
+              <Instagram size={24} className="text-[var(--accent-red)]" />
+            </div>
+            <p className="text-sm font-medium">No actors found</p>
+            <p className="text-xs text-[var(--muted)] mt-1">Add Instagram accounts to start outreach</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-[var(--table-header)] border-b border-[var(--table-border)]">
+                <tr>
+                  <th className="text-left py-3 px-5 text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Account</th>
+                  <th className="text-left py-3 px-5 text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Status</th>
+                  <th className="text-left py-3 px-5 text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Owner</th>
+                  <th className="text-left py-3 px-5 text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Activity</th>
+                  <th className="text-left py-3 px-5 text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Last Active</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--table-border)]">
+                {actors.map((actor) => {
+                  const statusStyle = getStatusStyle(actor.status || 'Active');
+                  return (
+                    <tr key={actor.id} className="hover:bg-[var(--table-row-hover)] transition-colors">
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[var(--accent-red-subtle)] flex items-center justify-center">
+                            <Instagram size={18} className="text-[var(--accent-red)]" />
+                          </div>
+                          <span className="text-sm font-medium">@{actor.username}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <span className={cn(
+                          'px-2 py-1 rounded text-xs font-medium',
+                          statusStyle.bg,
+                          statusStyle.text
+                        )}>
+                          {actor.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-1.5 text-sm text-[var(--muted)]">
+                          <UserIcon size={14} />
+                          {actor.ownerName}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <Activity size={14} className="text-[var(--primary)]" />
+                          <span className="font-medium">{actor.stats.dmsSent}</span>
+                          <span className="text-[var(--muted)]">DMs sent</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <span className="text-sm text-[var(--muted)]">
+                          {actor.last_activity ? format(new Date(actor.last_activity), 'MMM d, HH:mm') : '-'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

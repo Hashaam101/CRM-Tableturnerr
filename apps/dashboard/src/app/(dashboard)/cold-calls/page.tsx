@@ -19,12 +19,12 @@ import { formatDate, cn } from '@/lib/utils';
 
 // Outcome badge colors
 const OUTCOME_COLORS: Record<string, { bg: string; text: string }> = {
-  'Interested': { bg: 'bg-green-500/20', text: 'text-green-400' },
-  'Not Interested': { bg: 'bg-red-500/20', text: 'text-red-400' },
-  'Callback': { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
-  'No Answer': { bg: 'bg-gray-500/20', text: 'text-gray-400' },
-  'Wrong Number': { bg: 'bg-orange-500/20', text: 'text-orange-400' },
-  'Other': { bg: 'bg-purple-500/20', text: 'text-purple-400' },
+  'Interested': { bg: 'bg-[var(--success-subtle)]', text: 'text-[var(--success)]' },
+  'Not Interested': { bg: 'bg-[var(--error-subtle)]', text: 'text-[var(--error)]' },
+  'Callback': { bg: 'bg-[var(--warning-subtle)]', text: 'text-[var(--warning)]' },
+  'No Answer': { bg: 'bg-[var(--card-hover)]', text: 'text-[var(--muted)]' },
+  'Wrong Number': { bg: 'bg-[var(--warning-subtle)]', text: 'text-[var(--warning)]' },
+  'Other': { bg: 'bg-[var(--info-subtle)]', text: 'text-[var(--info)]' },
 };
 
 // Interest level bar component
@@ -35,8 +35,8 @@ function InterestBar({ level }: { level: number }) {
         <div
           className={cn(
             "h-full rounded-full transition-all",
-            level >= 7 ? "bg-green-500" :
-              level >= 4 ? "bg-yellow-500" : "bg-red-500"
+            level >= 7 ? "bg-[var(--success)]" :
+              level >= 4 ? "bg-[var(--warning)]" : "bg-[var(--error)]"
           )}
           style={{ width: `${level * 10}%` }}
         />

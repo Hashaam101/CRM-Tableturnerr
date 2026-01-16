@@ -21,10 +21,10 @@ import { formatDate, cn } from '@/lib/utils';
 
 // Source badge colors
 const SOURCE_COLORS: Record<string, { bg: string; text: string }> = {
-  'Cold Call': { bg: 'bg-blue-500/20', text: 'text-blue-400' },
-  'Google Maps': { bg: 'bg-green-500/20', text: 'text-green-400' },
-  'Manual': { bg: 'bg-purple-500/20', text: 'text-purple-400' },
-  'Instagram': { bg: 'bg-pink-500/20', text: 'text-pink-400' },
+  'Cold Call': { bg: 'bg-[var(--info-subtle)]', text: 'text-[var(--info)]' },
+  'Google Maps': { bg: 'bg-[var(--success-subtle)]', text: 'text-[var(--success)]' },
+  'Manual': { bg: 'bg-[var(--card-hover)]', text: 'text-[var(--muted)]' },
+  'Instagram': { bg: 'bg-[var(--accent-red-subtle)]', text: 'text-[var(--accent-red)]' },
 };
 
 // Company row with inline edit
@@ -111,13 +111,13 @@ function CompanyRow({
           <div className="flex items-center gap-1">
             <button
               onClick={handleSave}
-              className="p-1.5 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30"
+              className="p-1.5 rounded bg-[var(--success-subtle)] text-[var(--success)] hover:opacity-80 transition-opacity"
             >
               <Check size={14} />
             </button>
             <button
               onClick={handleCancel}
-              className="p-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+              className="p-1.5 rounded bg-[var(--error-subtle)] text-[var(--error)] hover:opacity-80 transition-opacity"
             >
               <X size={14} />
             </button>
@@ -410,9 +410,9 @@ function CompanyCallsDrawer({
                       {call.call_outcome && (
                         <span className={cn(
                           "px-2 py-0.5 rounded text-xs",
-                          call.call_outcome === 'Interested' ? 'bg-green-500/20 text-green-400' :
-                            call.call_outcome === 'Not Interested' ? 'bg-red-500/20 text-red-400' :
-                              'bg-gray-500/20 text-gray-400'
+                          call.call_outcome === 'Interested' ? 'bg-[var(--success-subtle)] text-[var(--success)]' :
+                            call.call_outcome === 'Not Interested' ? 'bg-[var(--error-subtle)] text-[var(--error)]' :
+                              'bg-[var(--card-hover)] text-[var(--muted)]'
                         )}>
                           {call.call_outcome}
                         </span>
