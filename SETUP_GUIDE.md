@@ -13,7 +13,8 @@
 5. [Dashboard Setup](#5-dashboard-setup)
 6. [Transcriber Setup](#6-transcriber-setup)
 7. [Testing Checklist](#7-testing-checklist)
-8. [Troubleshooting](#8-troubleshooting)
+8. [Production Deployment (Ubuntu)](#8-production-deployment-local-ubuntu-server)
+9. [Troubleshooting](#9-troubleshooting)
 
 ---
 
@@ -35,19 +36,8 @@ python --version  # Should be 3.10+
 
 ## 2. PocketBase Setup
 
-### Option A: Local PocketBase
-1. Download PocketBase from https://pocketbase.io/docs
-2. Extract to a folder (e.g., `C:\PocketBase`)
-3. Run:
-   ```bash
-   cd C:\PocketBase
-   pocketbase serve
-   ```
-4. Access Admin UI at http://127.0.0.1:8090/_/
-
-### Option B: Remote PocketBase (Already Running)
 - Ensure you have admin access to your PocketBase instance
-- Default URL: `http://192.168.55.140:8090`
+- Default URL: `https://crm.tableturnerr.com/_/`
 
 ### Create Admin Account
 1. Go to the PocketBase Admin UI
@@ -59,7 +49,7 @@ python --version  # Should be 3.10+
 ## 3. Import Schema
 
 ### Step-by-Step
-1. Open PocketBase Admin UI (`http://your-pocketbase-url/_/`)
+1. Open PocketBase Admin UI (`https://crm.tableturnerr.com/_/`)
 2. Log in with your admin credentials
 3. Go to **Settings** → **Import Collections**
 4. Click **Load from JSON file**
@@ -86,22 +76,22 @@ After import, you should see these collections:
 ## 4. Seed Sample Data
 
 ### Configure Environment
-Create `.env` in `tools/migration/`:
+Create `.env` in `tools/database/`:
 ```bash
-cd tools/migration
+cd tools/database
 copy ..\..\.env.example .env
 ```
 
 Edit `.env` with your credentials:
 ```env
-POCKETBASE_URL=http://192.168.55.140:8090
+POCKETBASE_URL=https://crm.tableturnerr.com
 PB_ADMIN_EMAIL=your_admin_email
 PB_ADMIN_PASSWORD=your_admin_password
 ```
 
 ### Install Dependencies
 ```bash
-cd tools/migration
+cd tools
 pip install httpx python-dotenv
 ```
 
@@ -161,7 +151,7 @@ copy .env.example .env.local
 
 Edit with your PocketBase URL:
 ```env
-NEXT_PUBLIC_POCKETBASE_URL=http://192.168.55.140:8090
+NEXT_PUBLIC_POCKETBASE_URL=https://crm.tableturnerr.com
 ```
 
 ### Start Development Server
@@ -189,7 +179,7 @@ copy .env.example .env
 
 Edit `.env`:
 ```env
-POCKETBASE_URL=http://192.168.55.140:8090
+POCKETBASE_URL=https://crm.tableturnerr.com
 PB_ADMIN_EMAIL=your_admin_email
 PB_ADMIN_PASSWORD=your_admin_password
 GEMINI_API_KEY=your_gemini_api_key
@@ -284,7 +274,7 @@ python transcribe_calls.py sample.mp3 --phone "+1-555-0000"
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 ### "Connection refused" Error
 - **Cause**: PocketBase not running
@@ -303,7 +293,7 @@ python transcribe_calls.py sample.mp3 --phone "+1-555-0000"
 
 ### Dashboard shows empty data
 - **Cause**: Sample data not seeded
-- **Fix**: Run `python tools/migration/seed_data.py`
+- **Fix**: Run `python tools/database/seed_data.py`
 
 ### "Module not found" in Python
 - **Cause**: Dependencies not installed
@@ -333,7 +323,7 @@ python transcribe_calls.py sample.mp3 --phone "+1-555-0000"
 ### URLs
 | Service | URL |
 |---------|-----|
-| PocketBase Admin | http://192.168.55.140:8090/_/ |
+| PocketBase Admin | https://crm.tableturnerr.com/_/ |
 | Dashboard | http://localhost:3000 |
 
 ### Default Test Credentials
@@ -349,7 +339,7 @@ python transcribe_calls.py sample.mp3 --phone "+1-555-0000"
 cd apps/dashboard && pnpm dev
 
 # Seed Data
-cd tools/migration && python seed_data.py
+cd tools/database && python seed_data.py
 
 # Transcribe Audio
 cd tools/transcriber && python transcribe_calls.py <audio.mp3>
@@ -357,6 +347,105 @@ cd tools/transcriber && python transcribe_calls.py <audio.mp3>
 # Build Dashboard
 cd apps/dashboard && pnpm build
 ```
+
+---
+
+## 8. Production Deployment (Local Ubuntu Server)
+
+If you are hosting this on a local Ubuntu server (e.g., a mini PC or VM) and want to access it from the internet, follow these steps.
+
+### 8.1 Prerequisites (Ubuntu)
+Update your system and install basic tools:
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y unzip curl git python3-pip
+```
+
+**Install Node.js (via fnm or nvm recommended):**
+```bash
+curl -fsSL https://fnm.vercel.app/install | bash
+source ~/.bashrc
+fnm use --install-if-missing 20
+node -v # Should be v20+
+```
+
+**Install pnpm:**
+```bash
+npm install -g pnpm
+```
+
+### 8.2 PocketBase Setup (Linux Service)
+1. **Download:**
+   ```bash
+   wget https://github.com/pocketbase/pocketbase/releases/download/v0.23.0/pocketbase_0.23.0_linux_amd64.zip
+   unzip pocketbase_*.zip -d pocketbase
+   ```
+2. **Run manually first** to create the initial admin account:
+   ```bash
+   ./pocketbase/pocketbase serve --http="0.0.0.0:8090"
+   ```
+3. **Setup as System Service (Optional but Recommended):**
+   Create a systemd service file `/etc/systemd/system/pocketbase.service` to keep it running in the background.
+
+### 8.3 Dashboard Setup
+1. **Clone/Copy Project** to your server.
+2. **Install & Build:**
+   ```bash
+   cd apps/dashboard
+   pnpm install
+   pnpm build
+   ```
+3. **Run with PM2** (Process Manager):
+   ```bash
+   npm install -g pm2
+   pm2 start npm --name "crm-dashboard" -- start
+   pm2 save
+   ```
+
+### 8.4 Cloudflare Tunnel Setup (Subdomain)
+To access your local server from the internet without port forwarding, use **Cloudflare Tunnel**.
+
+1. **Install cloudflared:**
+   ```bash
+   curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+   sudo dpkg -i cloudflared.deb
+   ```
+
+2. **Login & Create Tunnel:**
+   ```bash
+   cloudflared tunnel login
+   cloudflared tunnel create crm-tunnel
+   ```
+
+3. **Configure Tunnel:**
+   Create a configuration file `~/.cloudflared/config.yml`:
+   ```yaml
+   tunnel: <Tunnel-UUID>
+   credentials-file: /home/<user>/.cloudflared/<Tunnel-UUID>.json
+
+   ingress:
+     # Route traffic for your subdomain to the Next.js Dashboard
+     - hostname: crm.yourdomain.com
+       service: http://localhost:3000
+     
+     # Route traffic for the API/Admin UI
+     - hostname: api.yourdomain.com
+       service: http://localhost:8090
+       
+     - service: http_status:404
+   ```
+
+4. **Route DNS:**
+   ```bash
+   cloudflared tunnel route dns crm-tunnel crm.yourdomain.com
+   cloudflared tunnel route dns crm-tunnel api.yourdomain.com
+   ```
+
+5. **Run Tunnel:**
+   ```bash
+   cloudflared tunnel run crm-tunnel
+   ```
+   *(For persistence, install as a service: `sudo cloudflared service install`)*
 
 ---
 
