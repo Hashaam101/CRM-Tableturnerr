@@ -36,7 +36,7 @@ export default function LeadsPage() {
     try {
       setLoading(true);
       const records = await pb.collection(COLLECTIONS.LEADS).getFullList<Lead>({
-        sort: '-created',
+        sort: '-id',  // Use 'id' since 'created' field is missing from PocketBase schema
       });
       setLeads(records);
     } catch (error) {

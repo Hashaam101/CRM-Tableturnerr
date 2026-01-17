@@ -16,6 +16,7 @@ interface AuthContextType {
     isLoading: boolean;
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<void>;
+    loginWithGoogle: () => Promise<void>;
     logout: () => void;
 }
 
@@ -76,6 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
     };
 
+    const loginWithGoogle = async () => {
+        const authData = await pb.collection('users').authWithOAuth2({ provider: 'google' });
+        const model = authData.record;
+        setUser({
+            id: model.id,
+            email: model.email || '',
+            name: model.name || model.email?.split('@')[0] || 'User',
+            avatar: model.avatar,
+        });
+    };
+
     const logout = () => {
         pb.authStore.clear();
         setUser(null);
@@ -89,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 isAuthenticated: !!user,
                 login,
+                loginWithGoogle,
                 logout,
             }}
         >

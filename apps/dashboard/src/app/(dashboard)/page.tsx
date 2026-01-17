@@ -87,7 +87,7 @@ export default function OverviewPage() {
           getCount(COLLECTIONS.LEADS),
           getCount(COLLECTIONS.USERS),
           pb.collection(COLLECTIONS.EVENT_LOGS).getList<EventLog>(1, 10, {
-            sort: '-created',
+            sort: '-id',  // Use 'id' since 'created' field is missing from PocketBase schema
             expand: 'user,actor,target,cold_call',
           }).catch(() => ({ items: [] })),
         ]);

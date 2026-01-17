@@ -76,7 +76,7 @@ function SortHeader({
 }
 
 export default function ColdCallsPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [calls, setCalls] = useState<ColdCall[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,8 +138,10 @@ export default function ColdCallsPage() {
   }, [page, sort, searchTerm, outcomeFilter, minInterest, isAuthenticated]);
 
   useEffect(() => {
-    fetchCalls();
-  }, [fetchCalls]);
+    if (isAuthenticated) {
+      fetchCalls();
+    }
+  }, [isAuthenticated, fetchCalls]);
 
   const handleSort = (field: string) => {
     setSort(prev => ({
@@ -312,7 +314,7 @@ export default function ColdCallsPage() {
 
       {/* Table */}
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl overflow-hidden">
-        {loading && calls.length === 0 ? (
+        {(loading || authLoading) && calls.length === 0 ? (
           <div className="p-12 text-center">
             <RefreshCw size={32} className="mx-auto mb-4 text-[var(--muted)] animate-spin" />
             <p className="text-[var(--muted)]">Loading cold calls...</p>
@@ -350,7 +352,7 @@ export default function ColdCallsPage() {
                       className="border-b border-[var(--card-border)] hover:bg-[var(--sidebar-bg)] transition-colors"
                     >
                       <td className="py-3 px-4">
-                        <span className="text-sm">{formatDate(call.created)}</span>
+                        <span className="text-sm">{call.created ? formatDate(call.created) : '-'}</span>
                       </td>
                       <td className="py-3 px-4">
                         <span className="font-medium">

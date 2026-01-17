@@ -344,7 +344,7 @@ function CompanyCallsDrawer({
           pb.collection(COLLECTIONS.COMPANIES).getOne<Company>(companyId),
           pb.collection(COLLECTIONS.COLD_CALLS).getList<ColdCall>(1, 50, {
             filter: `company = "${companyId}"`,
-            sort: '-created',
+            sort: '-id',  // Use 'id' since 'created' field is missing from PocketBase schema
           }),
         ]);
         setCompany(companyData);
@@ -436,7 +436,7 @@ function CompanyCallsDrawer({
 }
 
 export default function CompaniesPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -457,7 +457,7 @@ export default function CompaniesPage() {
       setError(null);
 
       const result = await pb.collection(COLLECTIONS.COMPANIES).getList<Company>(page, perPage, {
-        sort: '-created',
+        sort: '-id',  // Use 'id' since 'created' field is missing from PocketBase schema
         ...(searchTerm && { filter: `company_name ~ "${searchTerm}" || phone_numbers ~ "${searchTerm}" || owner_name ~ "${searchTerm}"` }),
       });
 
@@ -472,8 +472,10 @@ export default function CompaniesPage() {
   }, [page, searchTerm, isAuthenticated]);
 
   useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
+    if (isAuthenticated) {
+      fetchCompanies();
+    }
+  }, [isAuthenticated, fetchCompanies]);
 
   const handleEdit = async (id: string, data: Partial<Company>) => {
     try {
@@ -541,7 +543,7 @@ export default function CompaniesPage() {
 
       {/* Table */}
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl overflow-hidden">
-        {loading && companies.length === 0 ? (
+        {(loading || authLoading) && companies.length === 0 ? (
           <div className="p-12 text-center">
             <RefreshCw size={32} className="mx-auto mb-4 text-[var(--muted)] animate-spin" />
             <p className="text-[var(--muted)]">Loading companies...</p>
