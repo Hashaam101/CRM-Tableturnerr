@@ -15,9 +15,11 @@ import {
   Menu,
   X,
   Zap,
+  LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 const navItems = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
@@ -37,6 +39,7 @@ const bottomNavItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <>
@@ -152,14 +155,23 @@ export function Sidebar() {
 
         {/* User Profile */}
         <div className="px-4 py-4 border-t border-[var(--sidebar-border)]">
-          <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--sidebar-hover)] transition-colors cursor-pointer">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
             <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center">
-              <span className="text-white text-xs font-semibold">U</span>
+              <span className="text-white text-xs font-semibold">
+                {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
+              </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">User</p>
-              <p className="text-xs text-[var(--muted)] truncate">Operator</p>
+              <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+              <p className="text-xs text-[var(--muted)] truncate">{user?.email || ''}</p>
             </div>
+            <button
+              onClick={logout}
+              className="p-2 rounded-lg text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--error)] transition-colors"
+              title="Logout"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </aside>

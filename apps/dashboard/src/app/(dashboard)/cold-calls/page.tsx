@@ -16,6 +16,7 @@ import {
 import { pb } from '@/lib/pocketbase';
 import { COLLECTIONS, type ColdCall, type Company, type User } from '@/lib/types';
 import { formatDate, cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 // Outcome badge colors
 const OUTCOME_COLORS: Record<string, { bg: string; text: string }> = {
@@ -75,6 +76,7 @@ function SortHeader({
 }
 
 export default function ColdCallsPage() {
+  const { isAuthenticated } = useAuth();
   const [calls, setCalls] = useState<ColdCall[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +99,8 @@ export default function ColdCallsPage() {
   const perPage = 20;
 
   const fetchCalls = useCallback(async () => {
+    if (!isAuthenticated) return;
+
     try {
       setLoading(true);
       setError(null);
@@ -120,7 +124,7 @@ export default function ColdCallsPage() {
       const result = await pb.collection(COLLECTIONS.COLD_CALLS).getList<ColdCall>(page, perPage, {
         sort: `${sort.dir === 'desc' ? '-' : ''}${sort.field}`,
         expand: 'company,claimed_by',
-        filter: filters.length > 0 ? filters.join(' && ') : undefined,
+        ...(filters.length > 0 && { filter: filters.join(' && ') }),
       });
 
       setCalls(result.items);
@@ -131,7 +135,7 @@ export default function ColdCallsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, sort, searchTerm, outcomeFilter, minInterest]);
+  }, [page, sort, searchTerm, outcomeFilter, minInterest, isAuthenticated]);
 
   useEffect(() => {
     fetchCalls();
@@ -387,7 +391,7 @@ export default function ColdCallsPage() {
                       <td className="py-3 px-4">
                         <Link
                           href={`/cold-calls/${call.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[var(--primary)] text-white text-sm hover:bg-[var(--primary-hover)] transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-white text-[var(--background)] border border-[var(--card-border)] text-sm hover:bg-gray-100 transition-colors"
                         >
                           <Eye size={14} />
                           View

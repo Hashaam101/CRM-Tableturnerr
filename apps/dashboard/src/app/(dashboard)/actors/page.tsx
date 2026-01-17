@@ -6,6 +6,7 @@ import { InstaActor, COLLECTIONS, User } from '@/lib/types';
 import { format } from 'date-fns';
 import { Instagram, Activity, User as UserIcon, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 interface ActorStats {
   dmsSent: number;
@@ -23,12 +24,13 @@ const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
 };
 
 export default function ActorsPage() {
+  const { isAuthenticated } = useAuth();
   const [actors, setActors] = useState<ActorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchActors();
-  }, []);
+    if (isAuthenticated) fetchActors();
+  }, [isAuthenticated]);
 
   async function fetchActors() {
     setLoading(true);

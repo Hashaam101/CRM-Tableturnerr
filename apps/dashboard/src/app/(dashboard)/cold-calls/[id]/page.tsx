@@ -395,7 +395,7 @@ export default function ColdCallDetailPage({ params }: { params: PageParams }) {
                                 Set Alert
                             </button>
                             {!claimedBy && (
-                                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors">
+                                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100 transition-colors">
                                     <UserCheck size={16} />
                                     Claim This Call
                                 </button>

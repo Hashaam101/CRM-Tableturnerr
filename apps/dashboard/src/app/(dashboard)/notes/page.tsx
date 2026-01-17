@@ -6,10 +6,12 @@ import { Note, COLLECTIONS, User } from '@/lib/types';
 import { format } from 'date-fns';
 import { Plus, Archive, Trash2, RotateCcw, FileText, Search, X, StickyNote } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 type Tab = 'active' | 'archived' | 'deleted';
 
 export default function NotesPage() {
+  const { isAuthenticated } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('active');
@@ -19,8 +21,8 @@ export default function NotesPage() {
   const [currentNote, setCurrentNote] = useState<Partial<Note>>({});
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (isAuthenticated) fetchNotes();
+  }, [isAuthenticated]);
 
   async function fetchNotes() {
     setLoading(true);
@@ -109,7 +111,7 @@ export default function NotesPage() {
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100 transition-colors"
             >
               Save
             </button>
@@ -138,7 +140,7 @@ export default function NotesPage() {
 
         <button
           onClick={() => { setCurrentNote({}); setIsEditing(true); }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100 transition-colors"
         >
           <Plus size={16} />
           New Note

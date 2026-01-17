@@ -18,6 +18,7 @@ import {
 import { pb } from '@/lib/pocketbase';
 import { COLLECTIONS, type Company, type ColdCall } from '@/lib/types';
 import { formatDate, cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 // Source badge colors
 const SOURCE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -175,7 +176,7 @@ function CompanyRow({
           </button>
           <button
             onClick={() => onView(company.id)}
-            className="p-1.5 rounded bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+            className="p-1.5 rounded bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100 transition-colors"
             title="View calls"
           >
             <ChevronRight size={14} />
@@ -310,7 +311,7 @@ function AddCompanyModal({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+              className="flex-1 px-4 py-2 rounded-lg bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100"
             >
               Add Company
             </button>
@@ -435,6 +436,7 @@ function CompanyCallsDrawer({
 }
 
 export default function CompaniesPage() {
+  const { isAuthenticated } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -448,17 +450,15 @@ export default function CompaniesPage() {
   const perPage = 25;
 
   const fetchCompanies = useCallback(async () => {
+    if (!isAuthenticated) return;
+
     try {
       setLoading(true);
       setError(null);
 
-      const filter = searchTerm
-        ? `company_name ~ "${searchTerm}" || phone_numbers ~ "${searchTerm}" || owner_name ~ "${searchTerm}"`
-        : undefined;
-
       const result = await pb.collection(COLLECTIONS.COMPANIES).getList<Company>(page, perPage, {
         sort: '-created',
-        filter,
+        ...(searchTerm && { filter: `company_name ~ "${searchTerm}" || phone_numbers ~ "${searchTerm}" || owner_name ~ "${searchTerm}"` }),
       });
 
       setCompanies(result.items);
@@ -469,7 +469,7 @@ export default function CompaniesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm]);
+  }, [page, searchTerm, isAuthenticated]);
 
   useEffect(() => {
     fetchCompanies();
@@ -516,7 +516,7 @@ export default function CompaniesPage() {
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100 transition-colors"
           >
             <Plus size={16} />
             Add Company

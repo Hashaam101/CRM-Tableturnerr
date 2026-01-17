@@ -6,6 +6,7 @@ import { User, COLLECTIONS } from '@/lib/types';
 import { Plus, Phone, MessageSquare, Clock, RefreshCw, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 interface UserStats {
   calls: number;
@@ -23,12 +24,13 @@ const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
 };
 
 export default function TeamPage() {
+  const { isAuthenticated } = useAuth();
   const [users, setUsers] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUsersAndStats();
-  }, []);
+    if (isAuthenticated) fetchUsersAndStats();
+  }, [isAuthenticated]);
 
   async function fetchUsersAndStats() {
     setLoading(true);
@@ -114,7 +116,7 @@ export default function TeamPage() {
           </button>
           <button
             onClick={handleAddMember}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100 transition-colors"
           >
             <Plus size={16} />
             Add Member

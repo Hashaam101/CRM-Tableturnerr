@@ -6,6 +6,7 @@ import { Lead, COLLECTIONS } from '@/lib/types';
 import { format } from 'date-fns';
 import { Search, Users, X, Eye, Edit3, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 interface UnifiedLead extends Lead {
   isCompany?: boolean;
@@ -21,14 +22,15 @@ const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
 };
 
 export default function LeadsPage() {
+  const { isAuthenticated } = useAuth();
   const [leads, setLeads] = useState<UnifiedLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [selectedLead, setSelectedLead] = useState<UnifiedLead | null>(null);
 
   useEffect(() => {
-    fetchLeads();
-  }, []);
+    if (isAuthenticated) fetchLeads();
+  }, [isAuthenticated]);
 
   async function fetchLeads() {
     try {
@@ -143,7 +145,7 @@ export default function LeadsPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => setSelectedLead(lead)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100 transition-colors"
                           >
                             <Eye size={14} />
                             View
@@ -237,7 +239,7 @@ export default function LeadsPage() {
               >
                 Close
               </button>
-              <button className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] transition-colors">
+              <button className="px-4 py-2 rounded-lg text-sm font-medium bg-white text-[var(--background)] border border-[var(--card-border)] hover:bg-gray-100 transition-colors">
                 Edit Details
               </button>
             </div>

@@ -1,47 +1,19 @@
-import { Building2, Phone, Users, UserCog, Activity } from 'lucide-react';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Building2, Phone, Users, UserCog, Activity, RefreshCw } from 'lucide-react';
 import { StatsCard } from '@/components/stats-card';
 import { pb } from '@/lib/pocketbase';
 import { COLLECTIONS } from '@/lib/types';
 import type { EventLog } from '@/lib/types';
 import { timeAgo } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
-async function getStats() {
-  try {
-    const [companies, coldCalls, leads, users] = await Promise.all([
-      pb.collection(COLLECTIONS.COMPANIES).getList(1, 1),
-      pb.collection(COLLECTIONS.COLD_CALLS).getList(1, 1),
-      pb.collection(COLLECTIONS.LEADS).getList(1, 1),
-      pb.collection(COLLECTIONS.USERS).getList(1, 1, { filter: 'status != "suspended"' }),
-    ]);
-
-    return {
-      totalCompanies: companies.totalItems,
-      totalColdCalls: coldCalls.totalItems,
-      totalLeads: leads.totalItems,
-      activeMembers: users.totalItems,
-    };
-  } catch (error) {
-    console.error('Failed to fetch stats:', error);
-    return {
-      totalCompanies: 0,
-      totalColdCalls: 0,
-      totalLeads: 0,
-      activeMembers: 0,
-    };
-  }
-}
-
-async function getRecentActivity() {
-  try {
-    const result = await pb.collection(COLLECTIONS.EVENT_LOGS).getList<EventLog>(1, 10, {
-      sort: '-created',
-      expand: 'user,actor,target,cold_call',
-    });
-    return result.items;
-  } catch (error) {
-    console.error('Failed to fetch recent activity:', error);
-    return [];
-  }
+interface Stats {
+  totalCompanies: number;
+  totalColdCalls: number;
+  totalLeads: number;
+  activeMembers: number;
 }
 
 function getEventDescription(event: EventLog): string {
@@ -82,11 +54,68 @@ function getEventBadge(eventType: string): { bg: string; text: string } {
   }
 }
 
-export default async function OverviewPage() {
-  const [stats, recentActivity] = await Promise.all([
-    getStats(),
-    getRecentActivity(),
-  ]);
+export default function OverviewPage() {
+  const { isAuthenticated } = useAuth();
+  const [stats, setStats] = useState<Stats>({
+    totalCompanies: 0,
+    totalColdCalls: 0,
+    totalLeads: 0,
+    activeMembers: 0,
+  });
+  const [recentActivity, setRecentActivity] = useState<EventLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const getCount = async (collection: string, filter?: string) => {
+          try {
+            const result = await pb.collection(collection).getList(1, 1, filter ? { filter } : undefined);
+            return result.totalItems;
+          } catch (e) {
+            console.error(`Failed to fetch count for ${collection}:`, e);
+            return 0;
+          }
+        };
+
+        const [totalCompanies, totalColdCalls, totalLeads, activeMembers, activityResult] = await Promise.all([
+          getCount(COLLECTIONS.COMPANIES),
+          getCount(COLLECTIONS.COLD_CALLS),
+          getCount(COLLECTIONS.LEADS),
+          getCount(COLLECTIONS.USERS),
+          pb.collection(COLLECTIONS.EVENT_LOGS).getList<EventLog>(1, 10, {
+            sort: '-created',
+            expand: 'user,actor,target,cold_call',
+          }).catch(() => ({ items: [] })),
+        ]);
+
+        setStats({
+          totalCompanies,
+          totalColdCalls,
+          totalLeads,
+          activeMembers,
+        });
+        setRecentActivity(activityResult.items);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <RefreshCw size={32} className="animate-spin text-[var(--muted)]" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
