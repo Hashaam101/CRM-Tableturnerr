@@ -19,7 +19,7 @@ import os
 import sys
 import json
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Set
 
 import httpx
@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-POCKETBASE_URL = os.getenv('POCKETBASE_URL', 'https://crmdb.tableturnerr.com')
+POCKETBASE_URL = os.getenv('POCKETBASE_URL', 'http://127.0.0.1:8090')
 PB_ADMIN_EMAIL = os.getenv('PB_ADMIN_EMAIL', '')
 PB_ADMIN_PASSWORD = os.getenv('PB_ADMIN_PASSWORD', '')
 
@@ -139,9 +139,9 @@ class PocketBaseSeeder:
             
             # Common dependent collections first
             priority_order = [
-                'event_logs', 'outreach_logs', 'call_transcripts', 'cold_calls', 
-                'notes', 'leads', 'insta_actors', 'goals', 'rules', 'alerts',
-                'companies', 'users' 
+                'alerts', 'rules', 'goals', 'outreach_logs', 'event_logs', 
+                'call_transcripts', 'cold_calls', 'notes', 'leads', 
+                'insta_actors', 'companies', 'users' 
             ]
             
             # Sort collections by priority
@@ -187,7 +187,7 @@ class PocketBaseSeeder:
                     'passwordConfirm': 'Password123!',
                     'role': user['role'],
                     'status': 'online' if user['role'] == 'admin' else 'offline',
-                    'last_activity': datetime.utcnow().isoformat() + 'Z'
+                    'last_activity': datetime.now(timezone.utc).isoformat() + 'Z'
                 }
                 
                 rec = self.create_record('users', user_data)
@@ -409,8 +409,8 @@ Caller: Wonderful! I'll bring some custom mockups for your menu. See you Thursda
             try:
                 self.create_record('leads', {
                     **lead,
-                    'first_contacted': (datetime.utcnow() - timedelta(days=14)).isoformat() + 'Z',
-                    'last_updated': datetime.utcnow().isoformat() + 'Z'
+                    'first_contacted': (datetime.now(timezone.utc) - timedelta(days=14)).isoformat() + 'Z',
+                    'last_updated': datetime.now(timezone.utc).isoformat() + 'Z'
                 })
                 print(f"   ✓ Created lead: @{lead['username']} ({lead['status']})")
             except Exception as e:
@@ -451,7 +451,7 @@ Caller: Wonderful! I'll bring some custom mockups for your menu. See you Thursda
             try:
                 rec = self.create_record('insta_actors', {
                     **actor,
-                    'last_activity': datetime.utcnow().isoformat() + 'Z'
+                    'last_activity': datetime.now(timezone.utc).isoformat() + 'Z'
                 })
                 self.id_maps['actors'][actor['username']] = rec['id']
                 print(f"   ✓ Created actor: @{actor['username']} ({actor['status']})")
@@ -537,6 +537,168 @@ Caller: Wonderful! I'll bring some custom mockups for your menu. See you Thursda
                 print(f"   ✓ Created event: {event['event_type']} - {event['details'][:40]}...")
             except Exception as e:
                 print(f"   ✗ Failed to create event: {e}")
+
+    def seed_goals(self):
+        """Create sample goals."""
+        print("\n🏆 Creating goals...")
+        
+        admin_id = self.id_maps.get('users', {}).get('admin@tableturnerr.com')
+        # Get first actor ID safely
+        actor_id = None
+        if self.id_maps.get('actors'):
+            actor_id = list(self.id_maps['actors'].values())[0]
+
+        if not admin_id:
+            print("   ⚠ No admin user found - skipping goals")
+            return
+
+        goals = [
+            {
+                'metric': 'Total Messages Sent',
+                'target_value': 100,
+                'frequency': 'Daily',
+                'assigned_to_user': admin_id,
+                'assigned_to_actor': actor_id,
+                'status': 'Active',
+                'start_date': datetime.now(timezone.utc).date().isoformat(),
+                'end_date': (datetime.now(timezone.utc).date() + timedelta(days=30)).isoformat()
+            },
+            {
+                'metric': 'Calls Made',
+                'target_value': 50,
+                'frequency': 'Weekly',
+                'assigned_to_user': admin_id,
+                'status': 'Active',
+                'start_date': datetime.now(timezone.utc).date().isoformat()
+            }
+        ]
+
+        for goal in goals:
+            try:
+                self.create_record('goals', goal)
+                print(f"   ✓ Created goal: {goal['frequency']} {goal['metric']}")
+            except Exception as e:
+                print(f"   ✗ Failed to create goal: {e}")
+
+    def seed_rules(self):
+        """Create sample rules."""
+        print("\n📏 Creating rules...")
+
+        admin_id = self.id_maps.get('users', {}).get('admin@tableturnerr.com')
+        actor_id = None
+        if self.id_maps.get('actors'):
+            actor_id = list(self.id_maps['actors'].values())[0]
+
+        if not admin_id:
+            print("   ⚠ No admin user found - skipping rules")
+            return
+
+        rules = [
+            {
+                'type': 'Frequency Cap',
+                'metric': 'Total Messages Sent',
+                'limit_value': 50,
+                'time_window_sec': 86400, # 24 hours
+                'severity': 'High',
+                'assigned_to_user': admin_id,
+                'assigned_to_actor': actor_id,
+                'status': 'Active'
+            },
+            {
+                'type': 'Interval Spacing',
+                'metric': 'Calls Made',
+                'limit_value': 1,
+                'time_window_sec': 300, # 5 minutes
+                'severity': 'Medium',
+                'assigned_to_user': admin_id,
+                'status': 'Active'
+            }
+        ]
+
+        for rule in rules:
+            try:
+                self.create_record('rules', rule)
+                print(f"   ✓ Created rule: {rule['type']} on {rule['metric']}")
+            except Exception as e:
+                print(f"   ✗ Failed to create rule: {e}")
+
+    def seed_alerts(self):
+        """Create sample alerts."""
+        print("\n🚨 Creating alerts...")
+
+        admin_id = self.id_maps.get('users', {}).get('admin@tableturnerr.com')
+        
+        if not admin_id:
+            print("   ⚠ No admin user found - skipping alerts")
+            return
+            
+        alerts = [
+            {
+                'created_by': admin_id,
+                'target_user': admin_id,
+                'entity_type': 'goal',
+                'entity_label': 'Daily Messages Goal',
+                'alert_time': datetime.now(timezone.utc).isoformat() + 'Z',
+                'message': 'You are close to reaching your daily message limit.',
+                'is_dismissed': False
+            },
+            {
+                'created_by': admin_id,
+                'target_user': admin_id,
+                'entity_type': 'lead',
+                'entity_id': 'so_important',
+                'entity_label': 'VIP Lead',
+                'alert_time': (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat() + 'Z',
+                'message': 'Follow up required for VIP lead.',
+                'is_dismissed': True
+            }
+        ]
+
+        for alert in alerts:
+            try:
+                self.create_record('alerts', alert)
+                print(f"   ✓ Created alert: {alert['message'][:30]}...")
+            except Exception as e:
+                print(f"   ✗ Failed to create alert: {e}")
+
+    def seed_outreach_logs(self):
+        """Create sample outreach logs (requires creating an event first)."""
+        print("\n📨 Creating outreach logs...")
+        
+        admin_id = self.id_maps.get('users', {}).get('admin@tableturnerr.com')
+        actor_id = None
+        if self.id_maps.get('actors'):
+            actor_id = list(self.id_maps['actors'].values())[0]
+
+        if not admin_id or not actor_id:
+            print("   ⚠ Missing admin or actor - skipping outreach logs")
+            return
+
+        # 1. Create the parent event
+        event_data = {
+            'event_type': 'Outreach',
+            'details': 'Direct Message sent to potential lead',
+            'source': 'Instagram',
+            'user': admin_id,
+            'actor': actor_id
+        }
+        
+        try:
+            event_rec = self.create_record('event_logs', event_data)
+            print(f"   ✓ Created parent event for outreach")
+            
+            # 2. Create the outreach log
+            outreach_data = {
+                'event': event_rec['id'],
+                'message_text': "Hey! Loved your recent post about sustainable dining. We have a tool that helps with that.",
+                'sent_at': datetime.now(timezone.utc).isoformat() + 'Z'
+            }
+            
+            self.create_record('outreach_logs', outreach_data)
+            print(f"   ✓ Created outreach log")
+            
+        except Exception as e:
+            print(f"   ✗ Failed to create outreach sequence: {e}")
     
     def close(self):
         self.client.close()
@@ -545,7 +707,10 @@ Caller: Wonderful! I'll bring some custom mockups for your menu. See you Thursda
 def main():
     parser = argparse.ArgumentParser(description='Seed PocketBase with sample data.')
     parser.add_argument('--clean', action='store_true', help='Remove previously created sample data')
+    parser.add_argument('--url', default=POCKETBASE_URL, help='PocketBase URL (default: env POCKETBASE_URL or http://127.0.0.1:8090)')
     args = parser.parse_args()
+
+
 
     print("=" * 60)
     print("CRM-Tableturnerr: Seed Sample Data")
@@ -557,6 +722,8 @@ def main():
         sys.exit(1)
     
     seeder = PocketBaseSeeder()
+    if args.url:
+        seeder.url = args.url
     
     try:
         seeder.authenticate(PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD)
@@ -572,6 +739,10 @@ def main():
             seeder.seed_insta_actors()
             seeder.seed_notes()
             seeder.seed_event_logs()
+            seeder.seed_goals()
+            seeder.seed_rules()
+            seeder.seed_alerts()
+            seeder.seed_outreach_logs()
             
             # Save the log of created IDs
             seeder.save_seed_log()
