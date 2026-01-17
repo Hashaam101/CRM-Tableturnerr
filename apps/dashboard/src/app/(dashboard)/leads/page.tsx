@@ -216,7 +216,7 @@ export default function LeadsPage() {
                 <div>
                   <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">Last Updated</p>
                   <p className="text-sm font-medium">
-                    {selectedLead.last_updated ? format(new Date(selectedLead.last_updated), 'PPP p') : '-'}
+                    {selectedLead.updated ? format(new Date(selectedLead.updated), 'PPP p') : '-'}
                   </p>
                 </div>
               </div>

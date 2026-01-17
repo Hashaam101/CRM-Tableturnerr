@@ -25,7 +25,6 @@ export interface Lead extends RecordModel {
   username: string;
   status: 'Cold No Reply' | 'Replied' | 'Warm' | 'Booked' | 'Paid' | 'Client' | 'Excluded';
   first_contacted?: string;
-  last_updated?: string;
   notes?: string;
   email?: string;
   phone?: string;

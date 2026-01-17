@@ -39,25 +39,58 @@ export default function TeamPage() {
 
       const usersWithStats = await Promise.all(usersResult.items.map(async (user) => {
         let calls = 0;
+        let lastCallTime = null;
         try {
           const callsResult = await pb.collection(COLLECTIONS.COLD_CALLS).getList(1, 1, {
             filter: `claimed_by = "${user.id}"`,
-            fields: 'id'
+            sort: '-created',
+            fields: 'id,created'
           });
           calls = callsResult.totalItems;
+          if (callsResult.items.length > 0) {
+            lastCallTime = callsResult.items[0].created;
+          }
         } catch (e) { console.error(e); }
 
         let dms = 0;
+        let lastDmTime = null;
         try {
           const dmsResult = await pb.collection(COLLECTIONS.EVENT_LOGS).getList(1, 1, {
             filter: `user = "${user.id}" && event_type = "Outreach"`,
-            fields: 'id'
+            sort: '-created',
+            fields: 'id,created'
           });
           dms = dmsResult.totalItems;
+
+          // Get latest event of ANY type for last active time
+          const latestEventResult = await pb.collection(COLLECTIONS.EVENT_LOGS).getList(1, 1, {
+            filter: `user = "${user.id}"`,
+            sort: '-created',
+            fields: 'created'
+          });
+          if (latestEventResult.items.length > 0) {
+            lastDmTime = latestEventResult.items[0].created;
+          }
+
         } catch (e) { console.error(e); }
+
+        // Calculate most recent activity
+        const times = [user.updated, user.created, lastCallTime, lastDmTime].filter(Boolean) as string[];
+        // Sort effectively by converting to dates
+        times.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+        const last_activity = times.length > 0 ? times[0] : undefined;
+
+        console.log(`[TeamPage] User ${user.email} activity:`, {
+          updated: user.updated,
+          created: user.created,
+          lastCallTime,
+          lastDmTime,
+          calculated: last_activity
+        });
 
         return {
           ...user,
+          last_activity,
           stats: { calls, dms }
         };
       }));

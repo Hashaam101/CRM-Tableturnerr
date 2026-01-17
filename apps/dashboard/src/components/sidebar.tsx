@@ -156,10 +156,18 @@ export function Sidebar() {
         {/* User Profile */}
         <div className="px-4 py-4 border-t border-[var(--sidebar-border)]">
           <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
-            <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center">
-              <span className="text-white text-xs font-semibold">
-                {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
-              </span>
+            <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center overflow-hidden relative">
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name || 'User'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-white text-xs font-semibold">
+                  {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>

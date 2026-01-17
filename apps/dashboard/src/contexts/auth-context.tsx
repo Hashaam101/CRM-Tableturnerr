@@ -9,6 +9,8 @@ interface User {
     email: string;
     name: string;
     avatar?: string;
+    role: 'admin' | 'member';
+    status: 'online' | 'offline' | 'suspended';
 }
 
 interface AuthContextType {
@@ -27,17 +29,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
+    // Helper to extract user data from PB model
+    const mapUser = (model: any): User => ({
+        id: model.id,
+        email: model.email || '',
+        name: model.name || model.email?.split('@')[0] || 'User',
+        avatar: model.avatar ? pb.files.getUrl(model, model.avatar) : undefined,
+        role: model.role || 'member',
+        status: model.status || 'offline'
+    });
+
     // Initialize auth state from PocketBase's authStore
     useEffect(() => {
         const initAuth = () => {
             if (pb.authStore.isValid && pb.authStore.model) {
-                const model = pb.authStore.model;
-                setUser({
-                    id: model.id,
-                    email: model.email || '',
-                    name: model.name || model.email?.split('@')[0] || 'User',
-                    avatar: model.avatar,
-                });
+                setUser(mapUser(pb.authStore.model));
             } else {
                 setUser(null);
             }
@@ -49,13 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Listen for auth state changes
         const unsubscribe = pb.authStore.onChange(() => {
             if (pb.authStore.isValid && pb.authStore.model) {
-                const model = pb.authStore.model;
-                setUser({
-                    id: model.id,
-                    email: model.email || '',
-                    name: model.name || model.email?.split('@')[0] || 'User',
-                    avatar: model.avatar,
-                });
+                setUser(mapUser(pb.authStore.model));
             } else {
                 setUser(null);
             }
@@ -67,36 +67,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string) => {
-        const authData = await pb.collection('users').authWithPassword(email, password);
-        const model = authData.record;
-        setUser({
-            id: model.id,
-            email: model.email || '',
-            name: model.name || model.email?.split('@')[0] || 'User',
-            avatar: model.avatar,
-        });
+        try {
+            const authData = await pb.collection('users').authWithPassword(email, password);
+            const model = authData.record;
+
+            if (model.status === 'suspended') {
+                pb.authStore.clear();
+                throw new Error('Your account has been suspended.');
+            }
+
+            // Update status and role if missing
+            const updates: any = {
+                status: 'online',
+                last_activity: new Date().toISOString()
+            };
+
+            // Should not happen for password auth if seeded correctly, but good for safety
+            if (!model.role) {
+                updates.role = 'member';
+            }
+
+            await pb.collection('users').update(model.id, updates);
+
+            // Refresh model to get updated role
+            const updatedRecord = await pb.collection('users').getOne(model.id);
+            setUser(mapUser(updatedRecord));
+        } catch (error) {
+            console.error('Login failed:', error);
+            throw error;
+        }
     };
 
     const loginWithGoogle = async () => {
-        console.log('Login with Google initiated');
-        console.log('PB URL:', pb.baseUrl);
         try {
             const authData = await pb.collection('users').authWithOAuth2({ provider: 'google' });
-            console.log('Google auth data:', authData);
             const model = authData.record;
-            setUser({
-                id: model.id,
-                email: model.email || '',
-                name: model.name || model.email?.split('@')[0] || 'User',
-                avatar: model.avatar,
-            });
+
+            if (model.status === 'suspended') {
+                pb.authStore.clear();
+                throw new Error('Your account has been suspended.');
+            }
+
+            // Update status and default role for new users
+            const updates: any = {
+                status: 'online',
+                last_activity: new Date().toISOString()
+            };
+
+            // Set default role for new OAuth users
+            if (!model.role) {
+                updates.role = 'member';
+            }
+
+            await pb.collection('users').update(model.id, updates);
+
+            // Refresh model to get updated role/status
+            const updatedRecord = await pb.collection('users').getOne(model.id);
+            setUser(mapUser(updatedRecord));
         } catch (error) {
             console.error('Google login failed:', error);
             throw error;
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        if (user?.id) {
+            try {
+                // Update status to offline
+                await pb.collection('users').update(user.id, {
+                    status: 'offline',
+                    last_activity: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Failed to update logout status:', error);
+            }
+        }
+
         pb.authStore.clear();
         setUser(null);
         router.push('/login');
