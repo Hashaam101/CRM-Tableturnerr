@@ -19,6 +19,7 @@ import { pb } from '@/lib/pocketbase';
 import { COLLECTIONS, type Company, type ColdCall } from '@/lib/types';
 import { formatDate, cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
+import { CompaniesTableSkeleton } from '@/components/dashboard-skeletons';
 
 // Source badge colors
 const SOURCE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -495,6 +496,10 @@ export default function CompaniesPage() {
     }
   };
 
+  if (loading || authLoading) {
+    return <CompaniesTableSkeleton />;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -543,16 +548,13 @@ export default function CompaniesPage() {
 
       {/* Table */}
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl overflow-hidden">
-        {(loading || authLoading) && companies.length === 0 ? (
-          <div className="p-12 text-center">
-            <RefreshCw size={32} className="mx-auto mb-4 text-[var(--muted)] animate-spin" />
-            <p className="text-[var(--muted)]">Loading companies...</p>
-          </div>
-        ) : companies.length === 0 ? (
-          <div className="p-12 text-center">
-            <Building2 size={48} className="mx-auto mb-4 text-[var(--muted)] opacity-50" />
-            <h2 className="text-lg font-medium">No Companies Found</h2>
-            <p className="text-[var(--muted)] mt-2">
+        {companies.length === 0 ? (
+          <div className="p-16 text-center">
+            <div className="w-12 h-12 rounded-full bg-[var(--primary-subtle)] flex items-center justify-center mx-auto mb-4">
+              <Building2 size={24} className="text-[var(--primary)]" />
+            </div>
+            <p className="text-sm font-medium">No companies found</p>
+            <p className="text-xs text-[var(--muted)] mt-1">
               {searchTerm ? 'Try a different search term' : 'Add your first company to get started'}
             </p>
           </div>

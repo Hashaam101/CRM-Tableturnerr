@@ -320,10 +320,12 @@ export default function ColdCallsPage() {
             <p className="text-[var(--muted)]">Loading cold calls...</p>
           </div>
         ) : calls.length === 0 ? (
-          <div className="p-12 text-center">
-            <Phone size={48} className="mx-auto mb-4 text-[var(--muted)] opacity-50" />
-            <h2 className="text-lg font-medium">No Cold Calls Found</h2>
-            <p className="text-[var(--muted)] mt-2">
+          <div className="p-16 text-center">
+            <div className="w-12 h-12 rounded-full bg-[var(--info-subtle)] flex items-center justify-center mx-auto mb-4">
+              <Phone size={24} className="text-[var(--info)]" />
+            </div>
+            <p className="text-sm font-medium">No cold calls found</p>
+            <p className="text-xs text-[var(--muted)] mt-1">
               {hasActiveFilters
                 ? 'Try adjusting your filters'
                 : 'Transcribe some call recordings to see them here'}

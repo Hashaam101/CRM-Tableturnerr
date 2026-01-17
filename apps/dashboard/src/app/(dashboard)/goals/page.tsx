@@ -12,10 +12,12 @@ export default function GoalsPage() {
       </div>
       <p className="text-[var(--muted)]">Set and track performance targets for your team</p>
 
-      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-12 text-center">
-        <Target size={48} className="mx-auto mb-4 text-[var(--muted)] opacity-50" />
-        <h2 className="text-lg font-medium">Goals Module</h2>
-        <p className="text-[var(--muted)] mt-2">
+      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-16 text-center">
+        <div className="w-12 h-12 rounded-full bg-[var(--warning-subtle)] flex items-center justify-center mx-auto mb-4">
+          <Target size={24} className="text-[var(--warning)]" />
+        </div>
+        <h2 className="text-sm font-medium">Goals module</h2>
+        <p className="text-xs text-[var(--muted)] mt-1">
           This feature is currently under development and will be available in a future release.
         </p>
       </div>

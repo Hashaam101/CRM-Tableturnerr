@@ -159,14 +159,14 @@ export default function TeamPage() {
 
       {/* Team Grid */}
       {loading ? (
-        <div className="text-center py-16">
+        <div className="p-16 text-center">
           <RefreshCw size={32} className="mx-auto mb-4 text-[var(--muted)] animate-spin" />
           <p className="text-sm text-[var(--muted)]">Loading team...</p>
         </div>
       ) : users.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="w-12 h-12 rounded-full bg-[var(--card-hover)] flex items-center justify-center mx-auto mb-4">
-            <Users size={24} className="text-[var(--muted)]" />
+        <div className="p-16 text-center">
+          <div className="w-12 h-12 rounded-full bg-[var(--primary-subtle)] flex items-center justify-center mx-auto mb-4">
+            <Users size={24} className="text-[var(--primary)]" />
           </div>
           <p className="text-sm font-medium">No team members found</p>
           <p className="text-xs text-[var(--muted)] mt-1">Add team members to get started</p>

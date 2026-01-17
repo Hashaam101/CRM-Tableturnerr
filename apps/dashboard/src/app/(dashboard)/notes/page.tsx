@@ -248,14 +248,14 @@ export default function NotesPage() {
 
       {/* Notes Grid */}
       {loading ? (
-        <div className="text-center py-16">
+        <div className="p-16 text-center">
           <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-sm text-[var(--muted)]">Loading notes...</p>
         </div>
       ) : filteredNotes.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="w-12 h-12 rounded-full bg-[var(--card-hover)] flex items-center justify-center mx-auto mb-4">
-            <StickyNote size={24} className="text-[var(--muted)]" />
+        <div className="p-16 text-center">
+          <div className="w-12 h-12 rounded-full bg-[var(--warning-subtle)] flex items-center justify-center mx-auto mb-4">
+            <StickyNote size={24} className="text-[var(--warning)]" />
           </div>
           <p className="text-sm font-medium">No notes found</p>
           <p className="text-xs text-[var(--muted)] mt-1">

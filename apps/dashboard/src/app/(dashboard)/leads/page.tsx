@@ -95,8 +95,8 @@ export default function LeadsPage() {
           </div>
         ) : filteredLeads.length === 0 ? (
           <div className="p-16 text-center">
-            <div className="w-12 h-12 rounded-full bg-[var(--card-hover)] flex items-center justify-center mx-auto mb-4">
-              <Users size={24} className="text-[var(--muted)]" />
+            <div className="w-12 h-12 rounded-full bg-[var(--success-subtle)] flex items-center justify-center mx-auto mb-4">
+              <Users size={24} className="text-[var(--success)]" />
             </div>
             <p className="text-sm font-medium">No leads found</p>
             <p className="text-xs text-[var(--muted)] mt-1">

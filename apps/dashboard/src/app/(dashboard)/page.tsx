@@ -75,8 +75,10 @@ export default function OverviewPage() {
           try {
             const result = await pb.collection(collection).getList(1, 1, filter ? { filter } : undefined);
             return result.totalItems;
-          } catch (e) {
-            console.error(`Failed to fetch count for ${collection}:`, e);
+          } catch (e: any) {
+            if (e.status !== 0) {
+              console.error(`Failed to fetch count for ${collection}:`, e);
+            }
             return 0;
           }
         };
