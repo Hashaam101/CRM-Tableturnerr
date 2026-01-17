@@ -569,7 +569,12 @@ export class CRMPocketBase {
         collection: string,
         callback: (event: { action: 'create' | 'update' | 'delete'; record: T }) => void
     ): () => void {
-        this.pb.collection(collection).subscribe('*', callback);
+        this.pb.collection(collection).subscribe('*', (data) => {
+            callback({
+                action: data.action as 'create' | 'update' | 'delete',
+                record: data.record as T
+            });
+        });
         return () => this.pb.collection(collection).unsubscribe('*');
     }
 
