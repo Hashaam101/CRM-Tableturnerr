@@ -205,7 +205,7 @@ export default function NotesPage() {
                 <div className="flex justify-between items-start gap-2 mb-3">
                   <h3 className="font-semibold text-sm truncate">{note.title}</h3>
                   <span className="text-[10px] text-[var(--muted)] uppercase tracking-wider shrink-0">
-                    {format(new Date(note.updated), 'MMM d')}
+                    {note.updated ? format(new Date(note.updated), 'MMM d') : '-'}
                   </span>
                 </div>
                 <p className="text-sm text-[var(--muted)] whitespace-pre-wrap line-clamp-6">
