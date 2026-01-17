@@ -129,9 +129,9 @@ export default function ColdCallsPage() {
 
       setCalls(result.items);
       setTotalPages(result.totalPages);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch cold calls:', err);
-      setError('Failed to load cold calls. Please check your connection.');
+      setError(`Failed to load cold calls: ${err.message} ${err.data ? JSON.stringify(err.data) : ''}`);
     } finally {
       setLoading(false);
     }
