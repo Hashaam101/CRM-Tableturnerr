@@ -392,11 +392,12 @@ class SaveApproveDialog(tk.Toplevel):
             self.save()
             return "break"  # Prevent character from being typed
         
-        # Bind to the entry field specifically for Y/N
+        # Bind to the entry field specifically for Y/N and ESC
         self.phone_entry.bind("<y>", on_key_y)
         self.phone_entry.bind("<Y>", on_key_y)
         self.phone_entry.bind("<n>", on_key_n)
         self.phone_entry.bind("<N>", on_key_n)
+        self.phone_entry.bind("<Escape>", lambda e: self.cancel())
         
         # Also bind to the dialog itself
         self.bind("<y>", on_key_y)
@@ -1606,11 +1607,25 @@ class RecorderApp:
         # Use after_idle to ensure event fires even when window is minimized/unfocused
         # after(0) can fail if the Tk event loop isn't processing events
         try:
+            # When stopping recording, bring the main window to front
+            if self.is_recording:
+                self.root.after_idle(self._bring_window_to_front)
             self.root.after_idle(self.toggle_recording)
             # Force the event loop to process by updating
             self.root.update_idletasks()
         except Exception as e:
             print(f"Hotkey callback error: {e}")
+    
+    def _bring_window_to_front(self):
+        """Bring the main window to the front and focus it."""
+        try:
+            self.root.deiconify()  # Restore if minimized
+            self.root.lift()  # Bring to front
+            self.root.attributes('-topmost', True)  # Temporarily set topmost
+            self.root.attributes('-topmost', False)  # Remove topmost so other windows can go above
+            self.root.focus_force()  # Force focus
+        except Exception:
+            pass
 
     def configure_hotkey(self):
         """Open hotkey configuration dialog."""
