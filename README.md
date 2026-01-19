@@ -1,4 +1,5 @@
 # CRM-Tableturnerr
+## Moved to [[TableTurnerr/Team-Stack]](https://github.com/TableTurnerr/Team-Stack)
 
 A unified, full-stack CRM and Outreach platform designed to streamline sales operations by integrating cold call monitoring, automated transcription, and Instagram outreach management into a single cohesive system.
 
